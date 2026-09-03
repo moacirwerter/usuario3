@@ -14,6 +14,8 @@ import lombok.*;
 @Entity //: Indica ao JPA que esta classe é uma
 // entidade mapeada para uma tabela do banco de dados.
 @Table(name = "endereco") //@Table: Define configurações da tabela
+@Builder
+
 public class Endereco {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
