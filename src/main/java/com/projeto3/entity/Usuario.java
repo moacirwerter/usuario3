@@ -3,6 +3,8 @@ package com.projeto3.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.Builder;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -21,8 +23,11 @@ import java.util.List;
 // para ler os valores dos atributos.
 @Entity //: Indica ao JPA que esta classe é uma
 // entidade mapeada para uma tabela do banco de dados.
-@Table(name = "usuario") //@Table: Define configurações da tabela
+@Table(name = "usuario")
+//@Table: Define configurações da tabela
 // (como o nome físico no banco, que por padrão será "usuario
+
+@Builder
 public class Usuario implements UserDetails {
     @Id //@Id: Define o atributo id como a chave primária da tabela.
     @GeneratedValue(strategy = GenerationType.IDENTITY)
