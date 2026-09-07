@@ -1,8 +1,8 @@
-package com.business.converter;
+package com.projeto3.business.converter;
 
-import com.business.dto.EnderecoDTO;
-import com.business.dto.TelefoneDTO;
-import com.business.dto.usuarioDTO; // Mantido conforme seu pacote físico, mas ideal é usar U maiúsculo no arquivo original
+import com.projeto3.business.dto.EnderecoDTO;
+import com.projeto3.business.dto.TelefoneDTO;
+import com.projeto3.business.dto.usuarioDTO; // Mantido conforme seu pacote físico, mas ideal é usar U maiúsculo no arquivo original
 import com.projeto3.entity.Endereco;
 import com.projeto3.entity.Telefone;
 import com.projeto3.entity.Usuario;

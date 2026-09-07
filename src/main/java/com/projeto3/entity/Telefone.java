@@ -17,7 +17,7 @@ import lombok.*;
 // (como o nome físico no banco, que por padrão será "usuario
 @Builder
 public class Telefone {
-@id
+@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 

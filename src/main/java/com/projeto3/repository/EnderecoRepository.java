@@ -1,6 +1,7 @@
 package com.projeto3.repository;
 
-import com.projeto1.aprendendospring.infrastructure.entity.Endereco;
+//import com.projeto3.aprendendospring.infrastructure.entity.Endereco;
+import com.projeto3.entity.Endereco;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

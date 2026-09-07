@@ -1,5 +1,7 @@
-package com.projeto1.aprendendospring.infrastructure.security;
+//package com.projeto1.aprendendospring.infrastructure.security;
+package com.projeto3.security;
 
+import com.projeto3.security.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

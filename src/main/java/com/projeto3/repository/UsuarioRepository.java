@@ -3,6 +3,7 @@ package com.projeto3.repository;
 
 import com.projeto3.entity.Usuario;
 import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 

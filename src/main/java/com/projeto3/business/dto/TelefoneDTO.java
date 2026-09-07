@@ -1,4 +1,4 @@
-package com.business.dto;
+package com.projeto3.business.dto;
 
 import lombok.*;
 

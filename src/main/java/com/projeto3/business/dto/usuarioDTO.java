@@ -1,6 +1,5 @@
-package com.business.dto;
+package com.projeto3.business.dto;
 
-import com.projeto3.entity.Telefone;
 import lombok.*;
 
 import java.util.List;
