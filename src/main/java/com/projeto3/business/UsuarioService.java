@@ -66,4 +66,5 @@ public class UsuarioService implements UserDetailsService {
         usuarioRepository.deleteByEmail(email);
 
     }
+
 }

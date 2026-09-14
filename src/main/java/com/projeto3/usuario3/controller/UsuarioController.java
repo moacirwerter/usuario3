@@ -11,8 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
-
-
 @RestController
 @RequestMapping("/usuario")
 @RequiredArgsConstructor
@@ -26,6 +24,7 @@ public class UsuarioController {
     public ResponseEntity<usuarioDTO> salvaUsuario(@RequestBody usuarioDTO usuarioDTO) {
         return ResponseEntity.ok(usuarioService.salvaUsuario(usuarioDTO));
     }
+
     @PostMapping("/login")
     public String login(@RequestBody usuarioDTO usuarioDTO) {
         Authentication authentication = authenticationManager.authenticate(
@@ -37,14 +36,15 @@ public class UsuarioController {
 
         return "Bearer " + jwtUtil.generateToken(authentication.getName());
     }
+
     @GetMapping
-    public ResponseEntity<Usuario> buscarPorEmail(@RequestParam("email") String email){
+    public ResponseEntity<Usuario> buscarPorEmail(@RequestParam("email") String email) {
         return ResponseEntity.ok(usuarioService.buscarusuarioPorEmail(email));
     }
+
     @DeleteMapping("/{email}")
-    public ResponseEntity<Void> deleteUsuarioPorEmail(@PathVariable String email){
+    public ResponseEntity<Void> deleteUsuarioPorEmail(@PathVariable String email) {
         usuarioService.deleteUsuarioPorEmail(email);
         return ResponseEntity.ok().build();
-
     }
 }
