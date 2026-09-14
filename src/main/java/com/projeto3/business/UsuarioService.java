@@ -4,6 +4,7 @@ import com.projeto3.business.converter.UsuarioConverter;
 import com.projeto3.business.dto.usuarioDTO;
 import com.projeto3.entity.Usuario;
 import com.projeto3.exceptions.ConflictException;
+import com.projeto3.repository.ResourceNotFoundException;
 import com.projeto3.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
@@ -51,9 +52,19 @@ public class UsuarioService implements UserDetailsService {
         } catch (ConflictException e) {
             throw new ConflictException("Email já cadastrado" + e.getCause());
         }
+
     }
 
     public boolean verificaEmailExistente(String email) {
         return usuarioRepository.existsByEmail(email);
     }
+    public Usuario buscarusuarioPorEmail(String email){
+        return usuarioRepository.findByEmail(email).orElseThrow(
+                () -> new ResourceNotFoundException("Email nao encontado" + email));
+    }
+    public void deleteUsuarioPorEmail(String email){
+        usuarioRepository.deleteByEmail(email);
+
+    }
+
 }
