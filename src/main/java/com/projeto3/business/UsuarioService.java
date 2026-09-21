@@ -8,9 +8,13 @@ import com.projeto3.entity.Endereco;
 import com.projeto3.entity.Telefone;
 import com.projeto3.entity.Usuario;
 import com.projeto3.exceptions.ConflictException;
+
 import com.projeto3.repository.EnderecoRepository;
 import com.projeto3.repository.ResourceNotFoundException;
 import com.projeto3.repository.TelefoneRepository;
+
+import com.projeto3.repository.ResourceNotFoundException;
+
 import com.projeto3.repository.UsuarioRepository;
 import com.projeto3.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -58,11 +62,13 @@ public class UsuarioService implements UserDetailsService {
         if (existe) {
             throw new ConflictException("Email já Cadastrado: " + email);
         }
+
     }
 
     public boolean verificaEmailExistente(String email) {
         return usuarioRepository.existsByEmail(email);
     }
+
 
     public usuarioDTO buscarusuarioPorEmail(String email) {
         try {
@@ -117,4 +123,15 @@ public class UsuarioService implements UserDetailsService {
         Telefone telefone = usuarioConverter.updateTelefone(dto, entity);
         return usuarioConverter.paraTelefoneDTO(telefoneRepository.save(telefone));
     }
+
+    public Usuario buscarusuarioPorEmail(String email){
+        return usuarioRepository.findByEmail(email).orElseThrow(
+                () -> new ResourceNotFoundException("Email nao encontado" + email));
+    }
+    public void deleteUsuarioPorEmail(String email){
+        usuarioRepository.deleteByEmail(email);
+
+    }
+
+
 }

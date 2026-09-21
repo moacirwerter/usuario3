@@ -1,5 +1,8 @@
-//package com.projeto1.aprendendospring.infrastructure.security;
 package com.projeto3.security;
+
+
+
+import com.projeto3.business.UsuarioService; // 👈 Importando seu serviço correto
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,36 +11,29 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-// Define a classe JwtRequestFilter, que estende OncePerRequestFilter
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    // Define propriedades para armazenar instâncias de JwtUtil e UserDetailsService
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    private final UsuarioService userDetailsService; // 👈 Modificado para usar UsuarioService
 
-    // Construtor que inicializa as propriedades com instâncias fornecidas
-    public JwtRequestFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+    public JwtRequestFilter(JwtUtil jwtUtil, UsuarioService userDetailsService) { // 👈 Modificado aqui também
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
     }
 
-    // Método chamado uma vez por requisição para processar o filtro
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        // Obtém o valor do header "Authorization" da requisição
         final String authorizationHeader = request.getHeader("Authorization");
 
-        // Verifica se o cabeçalho existe e começa com "Bearer "
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            // Extrai o token JWT do cabeçalho
             final String token = authorizationHeader.substring(7);
+
             // Extrai o nome de usuário do token JWT
             final String username = jwtUtil.extrairEmailToken(token);
 
@@ -52,11 +48,26 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                             userDetails, null, userDetails.getAuthorities());
                     // Define a autenticação no contexto de segurança
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+
+
+            try {
+                final String username = jwtUtil.extractUsername(token);
+
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                    if (!jwtUtil.isTokenExpired(token)) {
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+
                 }
+            } catch (Exception e) {
+                System.out.println("Erro na validação do JWT: " + e.getMessage());
             }
         }
 
-        // Continua a cadeia de filtros, permitindo que a requisição prossiga
         chain.doFilter(request, response);
     }
 }
