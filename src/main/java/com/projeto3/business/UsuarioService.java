@@ -1,10 +1,16 @@
 package com.projeto3.business;
 
 import com.projeto3.business.converter.UsuarioConverter;
+import com.projeto3.business.dto.EnderecoDTO;
+import com.projeto3.business.dto.TelefoneDTO;
 import com.projeto3.business.dto.usuarioDTO;
+import com.projeto3.entity.Endereco;
+import com.projeto3.entity.Telefone;
 import com.projeto3.entity.Usuario;
 import com.projeto3.exceptions.ConflictException;
+import com.projeto3.repository.EnderecoRepository;
 import com.projeto3.repository.ResourceNotFoundException;
+import com.projeto3.repository.TelefoneRepository;
 import com.projeto3.repository.UsuarioRepository;
 import com.projeto3.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +29,8 @@ public class UsuarioService implements UserDetailsService {
     private final UsuarioConverter usuarioConverter;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtil jwtUtil;
+    private final EnderecoRepository enderecoRepository;
+    private final TelefoneRepository telefoneRepository;
 
     @Override
     public UserDetails loadUserByUsername(@org.springframework.lang.NonNull String email) throws UsernameNotFoundException {
@@ -56,11 +64,15 @@ public class UsuarioService implements UserDetailsService {
         return usuarioRepository.existsByEmail(email);
     }
 
-    public Usuario buscarusuarioPorEmail(String email) {
-        return usuarioRepository.findByEmail(email).orElseThrow(
-                () -> new ResourceNotFoundException("Email não encontrado: " + email));
+    public usuarioDTO buscarusuarioPorEmail(String email) {
+        try {
+            return usuarioConverter.paraUsuarioDTO(
+                    usuarioRepository.findByEmail(email).orElseThrow(
+                            () -> new ResourceNotFoundException("Email não encontrado: " + email)));
+        } catch (ResourceNotFoundException e) {
+            throw new ResourceNotFoundException("Email nao encontrado" + email);
+        }
     }
-
     public void deletausuarioPorEmail(String email) {
         usuarioRepository.deleteByEmail(email);
     }
@@ -87,5 +99,22 @@ public class UsuarioService implements UserDetailsService {
 
         // 6. Converte a entidade salva e a retorna como DTO para o Controller
         return usuarioConverter.paraUsuarioDTO(usuarioSalvo);
+    }
+    public EnderecoDTO atualizaEndereco(Long idEndereco, EnderecoDTO enderecoDTO) {
+        Endereco entity = enderecoRepository.findById(idEndereco).orElseThrow(()->
+                new ResourceNotFoundException(" Id não encontrado" + idEndereco));
+        Endereco endereco = usuarioConverter.updateEndereco(enderecoDTO, entity);
+
+
+
+        return usuarioConverter.paraEnderecoDTO(enderecoRepository.save(endereco));
+
+    }
+    public TelefoneDTO atualizaTelefone(Long idTelefone, TelefoneDTO dto) {
+        Telefone entity = telefoneRepository.findById(idTelefone) .orElseThrow(()->
+            new ResourceNotFoundException(" Id não encontrado" + idTelefone));
+
+        Telefone telefone = usuarioConverter.updateTelefone(dto, entity);
+        return usuarioConverter.paraTelefoneDTO(telefoneRepository.save(telefone));
     }
 }
