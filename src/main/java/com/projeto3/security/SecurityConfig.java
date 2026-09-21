@@ -35,16 +35,17 @@ public class SecurityConfig {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/usuario/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/usuario/usuario").permitAll()
-                        .requestMatchers("/usuario/**").authenticated()
-                        .anyRequest().authenticated()
-                )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        // LIBERAÇÃO TOTAL DOS ENDPOINTS DE AUTENTICAÇÃO E ERROS INTERNOS
+                        .requestMatchers("/usuario/login", "/usuario/login/").permitAll()
+                        .requestMatchers("/error", "/error/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario", "/usuario/").permitAll()
+
+                        // Exige autenticação para todo o resto do sistema
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
