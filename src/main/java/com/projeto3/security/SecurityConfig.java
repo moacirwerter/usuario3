@@ -35,6 +35,8 @@ public class SecurityConfig {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
+
+
                 .authorizeHttpRequests(authorize -> authorize
                         // 1. Permissões públicas explícitas no topo
                         .requestMatchers(HttpMethod.POST, "/usuario/login").permitAll()
@@ -50,8 +52,18 @@ public class SecurityConfig {
                         // 3. Bloqueio padrão de segurança
                         .anyRequest().authenticated()
                 )
+
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        // LIBERAÇÃO TOTAL DOS ENDPOINTS DE AUTENTICAÇÃO E ERROS INTERNOS
+                        .requestMatchers("/usuario/login", "/usuario/login/").permitAll()
+                        .requestMatchers("/error", "/error/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario", "/usuario/").permitAll()
+
+                        // Exige autenticação para todo o resto do sistema
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
