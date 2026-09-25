@@ -1,0 +1,20 @@
+package com.projeto3.business.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Data
+public class EnderecoDTO {
+
+    private Long id; // <--Long"
+    private String rua;
+    private String numero;
+    private String complemento;
+    private String cidade;
+    private String estado;
+    private String cep;
+}
