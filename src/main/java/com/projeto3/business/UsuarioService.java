@@ -3,21 +3,18 @@ package com.projeto3.business;
 import com.projeto3.business.converter.UsuarioConverter;
 import com.projeto3.business.dto.EnderecoDTO;
 import com.projeto3.business.dto.TelefoneDTO;
-import com.projeto3.business.dto.usuarioDTO;
+import com.projeto3.business.dto.UsuarioDTO;
 import com.projeto3.entity.Endereco;
 import com.projeto3.entity.Telefone;
 import com.projeto3.entity.Usuario;
 import com.projeto3.exceptions.ConflictException;
-
 import com.projeto3.repository.EnderecoRepository;
 import com.projeto3.repository.ResourceNotFoundException;
 import com.projeto3.repository.TelefoneRepository;
-
-import com.projeto3.repository.ResourceNotFoundException;
-
 import com.projeto3.repository.UsuarioRepository;
 import com.projeto3.security.JwtUtil;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,7 +23,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
@@ -36,10 +32,25 @@ public class UsuarioService implements UserDetailsService {
     private final EnderecoRepository enderecoRepository;
     private final TelefoneRepository telefoneRepository;
 
+    public UsuarioService(UsuarioRepository usuarioRepository,
+                          UsuarioConverter usuarioConverter,
+                          @Lazy BCryptPasswordEncoder bCryptPasswordEncoder,
+                          JwtUtil jwtUtil,
+                          EnderecoRepository enderecoRepository,
+                          TelefoneRepository telefoneRepository) {
+        this.usuarioRepository = usuarioRepository;
+        this.usuarioConverter = usuarioConverter;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.jwtUtil = jwtUtil;
+        this.enderecoRepository = enderecoRepository;
+        this.telefoneRepository = telefoneRepository;
+    }
+
     @Override
-    public UserDetails loadUserByUsername(@org.springframework.lang.NonNull String email) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + email));
+    public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
+        String emailTratado = email != null ? email.trim() : "";
+        Usuario usuario = usuarioRepository.findByEmail(emailTratado)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + emailTratado));
 
         return User.builder()
                 .username(usuario.getEmail())
@@ -48,90 +59,101 @@ public class UsuarioService implements UserDetailsService {
                 .build();
     }
 
-    public usuarioDTO salvaUsuario(usuarioDTO usuarioDTO) {
+    public UsuarioDTO salvaUsuario(UsuarioDTO usuarioDTO) {
         emailExiste(usuarioDTO.getEmail());
         usuarioDTO.setSenha(bCryptPasswordEncoder.encode(usuarioDTO.getSenha()));
         Usuario usuario = usuarioConverter.paraUsuario(usuarioDTO);
 
-        return usuarioConverter.paraUsuarioDTO(
-                usuarioRepository.save(usuario));
+        return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
     }
 
     public void emailExiste(String email) {
-        boolean existe = verificaEmailExistente(email);
-        if (existe) {
-            throw new ConflictException("Email já Cadastrado: " + email);
+        String emailTratado = email != null ? email.trim() : "";
+        if (verificaEmailExistente(emailTratado)) {
+            throw new ConflictException("Email já Cadastrado: " + emailTratado);
         }
-
     }
 
     public boolean verificaEmailExistente(String email) {
-        return usuarioRepository.existsByEmail(email);
+        String emailTratado = email != null ? email.trim() : "";
+        return usuarioRepository.existsByEmail(emailTratado);
     }
 
-
-    public usuarioDTO buscarusuarioPorEmail(String email) {
-        try {
-            return usuarioConverter.paraUsuarioDTO(
-                    usuarioRepository.findByEmail(email).orElseThrow(
-                            () -> new ResourceNotFoundException("Email não encontrado: " + email)));
-        } catch (ResourceNotFoundException e) {
-            throw new ResourceNotFoundException("Email nao encontrado" + email);
-        }
-    }
-    public void deletausuarioPorEmail(String email) {
-        usuarioRepository.deleteByEmail(email);
+    public UsuarioDTO buscarUsuarioDtoPorEmail(String email) {
+        String emailTratado = email != null ? email.trim() : "";
+        return usuarioConverter.paraUsuarioDTO(
+                usuarioRepository.findByEmail(emailTratado)
+                        .orElseThrow(() -> new ResourceNotFoundException("Email não encontrado: " + emailTratado))
+        );
     }
 
-    // MÉTODO ATUALIZAR ORGANIZADO E CORRIGIDO
-    public usuarioDTO atualizaDadosUsuario(String token, usuarioDTO dto) {
-        // 1. Extrai o e-mail do usuário logado diretamente de dentro do Token JWT
+    public Usuario buscarUsuarioEntityPorEmail(String email) {
+        String emailTratado = email != null ? email.trim() : "";
+        return usuarioRepository.findByEmail(emailTratado)
+                .orElseThrow(() -> new ResourceNotFoundException("Email não encontrado: " + emailTratado));
+    }
+
+    public void deletaUsuarioPorEmail(String email) {
+        String emailTratado = email != null ? email.trim() : "";
+        usuarioRepository.deleteByEmail(emailTratado);
+    }
+
+    public UsuarioDTO atualizaDadosUsuario(String token, UsuarioDTO dto) {
         String emailToken = jwtUtil.extrairEmailToken(token.substring(7));
+        String emailTratado = emailToken != null ? emailToken.trim() : "";
 
-        // 2. Busca os dados atuais desse usuário no banco de dados
-        Usuario usuarioEntity = usuarioRepository.findByEmail(emailToken).orElseThrow(() ->
-                new ResourceNotFoundException("Usuário logado não encontrado no banco de dados."));
+        Usuario usuarioEntity = usuarioRepository.findByEmail(emailTratado)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário logado não encontrado no banco de dados."));
 
-        // 3. Mescla os novos dados vindos da requisição (DTO) com a entidade existente do banco
         Usuario usuarioAtualizado = usuarioConverter.updateUsuario(dto, usuarioEntity);
 
-        // 4. Se uma nova senha válida foi enviada no DTO, faz a criptografia usando a variável correta
         if (dto.getSenha() != null && !dto.getSenha().trim().isEmpty()) {
             usuarioAtualizado.setSenha(bCryptPasswordEncoder.encode(dto.getSenha()));
         }
 
-        // 5. Salva a entidade atualizada de volta no banco de dados
-        Usuario usuarioSalvo = usuarioRepository.save(usuarioAtualizado);
-
-        // 6. Converte a entidade salva e a retorna como DTO para o Controller
-        return usuarioConverter.paraUsuarioDTO(usuarioSalvo);
+        return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuarioAtualizado));
     }
+
     public EnderecoDTO atualizaEndereco(Long idEndereco, EnderecoDTO enderecoDTO) {
-        Endereco entity = enderecoRepository.findById(idEndereco).orElseThrow(()->
-                new ResourceNotFoundException(" Id não encontrado" + idEndereco));
+        Endereco entity = enderecoRepository.findById(idEndereco)
+                .orElseThrow(() -> new ResourceNotFoundException("Id não encontrado: " + idEndereco));
+
         Endereco endereco = usuarioConverter.updateEndereco(enderecoDTO, entity);
 
-
-
         return usuarioConverter.paraEnderecoDTO(enderecoRepository.save(endereco));
-
     }
+
+    // CORRIGIDO: Removido o fragmento ("/telefone") que quebrava a sintaxe do Java
     public TelefoneDTO atualizaTelefone(Long idTelefone, TelefoneDTO dto) {
-        Telefone entity = telefoneRepository.findById(idTelefone) .orElseThrow(()->
-            new ResourceNotFoundException(" Id não encontrado" + idTelefone));
+        Telefone entity = telefoneRepository.findById(idTelefone)
+                .orElseThrow(() -> new ResourceNotFoundException("Id não encontrado: " + idTelefone));
 
         Telefone telefone = usuarioConverter.updateTelefone(dto, entity);
+
         return usuarioConverter.paraTelefoneDTO(telefoneRepository.save(telefone));
     }
 
-    public Usuario buscarusuarioPorEmail(String email){
-        return usuarioRepository.findByEmail(email).orElseThrow(
-                () -> new ResourceNotFoundException("Email nao encontado" + email));
+    public EnderecoDTO cadastraEndereco(String token, EnderecoDTO dto) {
+        String email = jwtUtil.extrairEmailToken(token.substring(7));
+        String emailTratado = email != null ? email.trim() : "";
+
+        Usuario usuario = usuarioRepository.findByEmail(emailTratado)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não localizado: " + emailTratado));
+
+        Endereco endereco = usuarioConverter.paraEnderecoEntity(dto, usuario);
+
+        return usuarioConverter.paraEnderecoDTO(enderecoRepository.save(endereco));
     }
-    public void deleteUsuarioPorEmail(String email){
-        usuarioRepository.deleteByEmail(email);
 
+    public TelefoneDTO cadastraTelefone(String token, TelefoneDTO dto) {
+        String email = jwtUtil.extrairEmailToken(token.substring(7));
+        String emailTratado = email != null ? email.trim() : "";
+
+        Usuario usuario = usuarioRepository.findByEmail(emailTratado)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não localizado: " + emailTratado));
+
+        Telefone telefone = usuarioConverter.paraTelefoneEntity(dto, usuario);
+
+        return usuarioConverter.paraTelefoneDTO(telefoneRepository.save(telefone));
     }
-
-
 }
